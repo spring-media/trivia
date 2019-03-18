@@ -136,10 +136,8 @@ class GoldenMasterTest : BehaviorSpec({
     }
 })
 
-private fun Game.runGameToLog(seed: Long): String {
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    val printStream = PrintStream(byteArrayOutputStream, true, StandardCharsets.UTF_8.toString())
-    redirectOut(printStream) {
+private fun Game.runGameToLog(seed: Long) =
+    redirectOutToString {
         val rand = Random(seed)
         do {
             roll(rand.nextInt(5) + 1)
@@ -151,12 +149,19 @@ private fun Game.runGameToLog(seed: Long): String {
             }
 
         } while (GameRunner.notAWinner)
-
     }
-    return byteArrayOutputStream.toString(StandardCharsets.UTF_8.toString())
+
+fun redirectOutToString(function: () -> Unit): String {
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    redirectOut(byteArrayOutputStream, function)
+    return byteArrayOutputStream.toString(StandardCharsets.UTF_8.toString())!!
+}
+fun redirectOut(byteArrayOutputStream: ByteArrayOutputStream, function: () -> Unit) {
+    val printStream = PrintStream(byteArrayOutputStream, true, StandardCharsets.UTF_8.toString())
+    return redirectOut(printStream, function)
 }
 
-fun <T> redirectOut(printStream: PrintStream, function: () -> T) {
+fun redirectOut(printStream: PrintStream, function: () -> Unit) {
     val originalOut = System.out
     System.setOut(printStream)
     function()
